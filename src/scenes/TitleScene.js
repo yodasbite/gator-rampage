@@ -97,6 +97,7 @@ class TitleScene extends Phaser.Scene {
             }
             this.scene.start('GameScene', { levelIndex: 0 });
             this.scene.launch('HUDScene');
+            this.scene.bringToTop('HUDScene');
         });
     }
 }

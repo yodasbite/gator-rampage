@@ -23,10 +23,10 @@ const config = {
     scene: [
         PreloadScene,
         TitleScene,
-        HUDScene,
         GameScene,
         GameOverScene,
         VictoryScene,
+        HUDScene,     // must be last so it renders on top of everything
     ],
 
     parent: document.body,
