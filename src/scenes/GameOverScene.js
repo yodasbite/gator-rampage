@@ -11,6 +11,7 @@ class GameOverScene extends Phaser.Scene {
     }
 
     create() {
+        Music.stop();
         const w = C.GAME_W, h = C.GAME_H;
 
         // Background

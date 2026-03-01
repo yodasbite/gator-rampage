@@ -38,6 +38,7 @@ class GameScene extends Phaser.Scene {
         this.events.on('boss-hurt',     (hp,max) => this._hudUpdateBossBar(hp, max));
         this.events.on('boss-phase2',   ()       => this._hudBossPhase2());
 
+        Music.play(this.levelIndex);
         this._showLevelIntro();
     }
 

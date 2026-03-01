@@ -89,6 +89,7 @@ class TitleScene extends Phaser.Scene {
     }
 
     _startGame() {
+        Music.init();   // must happen inside a user-gesture handler
         this.cameras.main.fade(400, 0, 0, 0);
         this.time.delayedCall(400, () => {
             this.scene.start('GameScene', { levelIndex: 0 });

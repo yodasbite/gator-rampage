@@ -8,6 +8,7 @@ class VictoryScene extends Phaser.Scene {
     init(data) { this.finalScore = data.score || 0; }
 
     create() {
+        Music.stop();
         const w = C.GAME_W, h = C.GAME_H;
 
         // Celebratory background
