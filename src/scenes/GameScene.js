@@ -11,6 +11,7 @@ class GameScene extends Phaser.Scene {
         this.levelIndex  = data.levelIndex || 0;
         this.playerScore = data.score      || 0;
         this.playerHP    = data.hp         != null ? data.hp : C.P_HEALTH;
+        this.playerLives = data.lives      != null ? data.lives : C.P_LIVES;
     }
 
     create() {
@@ -208,6 +209,16 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(1, 0).setScrollFactor(0).setDepth(d);
         this._hudUpdateScore(this.playerScore);
 
+        // Lives — small Albert icons right of hearts
+        this._hudLifeIcons = [];
+        for (let i = 0; i < C.P_LIVES; i++) {
+            const icon = this.add.image(84 + i * 10, 9, 'albert_down')
+                .setOrigin(0.5).setScale(0.5)
+                .setScrollFactor(0).setDepth(d);
+            this._hudLifeIcons.push(icon);
+        }
+        this._hudUpdateLives(this.playerLives);
+
         // Level name
         this.add.text(w/2, 4, this.levelData.name, {
             fontFamily:'monospace', fontSize:'6px', color:'#f77f00',
@@ -229,6 +240,10 @@ class GameScene extends Phaser.Scene {
 
     _hudUpdateScore(s) {
         this._hudScoreTxt.setText('SCORE  ' + String(s).padStart(6, '0'));
+    }
+
+    _hudUpdateLives(lives) {
+        this._hudLifeIcons.forEach((icon, i) => icon.setVisible(i < lives));
     }
 
     _hudUpdateBossBar(hp, max) {
@@ -377,12 +392,25 @@ class GameScene extends Phaser.Scene {
     }
 
     _onPlayerDead() {
+        this.playerLives--;
+        this._hudUpdateLives(this.playerLives);
+
         this.cameras.main.fade(700, 0, 0, 0);
         this.time.delayedCall(700, () => {
-            this.scene.start('GameOverScene', {
-                score: this.player.score,
-                level: this.levelIndex + 1,
-            });
+            if (this.playerLives > 0) {
+                // Restart current level — full HP, same score, one fewer life
+                this.scene.restart({
+                    levelIndex: this.levelIndex,
+                    score:      this.player.score,
+                    hp:         C.P_HEALTH,
+                    lives:      this.playerLives,
+                });
+            } else {
+                this.scene.start('GameOverScene', {
+                    score: this.player.score,
+                    level: this.levelIndex + 1,
+                });
+            }
         });
     }
 }

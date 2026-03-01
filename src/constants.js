@@ -16,6 +16,7 @@ const C = {
     // Player
     P_SPEED:        90,
     P_HEALTH:       6,       // 6 hearts
+    P_LIVES:        3,       // starting lives
     P_ATTACK_DMG:   1,
     P_ATTACK_RANGE: 18,      // px ahead of player
     P_ATTACK_CD:    420,     // ms cooldown
