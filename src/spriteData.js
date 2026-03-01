@@ -873,8 +873,7 @@ const SPRITES = {
         g.fillRect(ox+1, oy+9, 2, 2); g.fillRect(ox+9, oy+9, 2, 2);
         g.fillStyle(0xb85c00);  // dark orange body
         g.fillRect(ox+2, oy+1, 8, 10); g.fillRect(ox+1, oy+2, 10, 8);
-        g.fillStyle(ox, oy, 0xf77f00);  // mid orange
-        g.fillStyle(0xf77f00);
+        g.fillStyle(0xf77f00);  // mid orange
         g.fillRect(ox+3, oy+2, 6, 8);  g.fillRect(ox+2, oy+3, 8, 6);
         g.fillStyle(0xffcc44);  // highlight
         g.fillRect(ox+3, oy+3, 3, 2);
