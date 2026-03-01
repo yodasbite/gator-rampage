@@ -39,16 +39,21 @@ class HUDScene extends Phaser.Scene {
         this._hideBossBar();
 
         // ── Listen to game events ─────────────
-        // Reattach whenever GameScene starts (covers first launch and every level restart)
-        this.scene.manager.events.on('start', (sys) => {
-            if (sys.settings && sys.settings.key === 'GameScene') {
-                this._reattach();
-            }
-        }, this);
+        // Poll until GameScene is active, then attach. Re-poll after each shutdown.
+        this._tryAttach();
     }
 
-    _reattach() {
+    _tryAttach() {
         const gs = this.scene.get('GameScene');
+        if (gs && gs.sys.isActive()) {
+            this._reattach(gs);
+        } else {
+            this.time.delayedCall(100, () => this._tryAttach());
+        }
+    }
+
+    _reattach(gs) {
+        if (!gs) gs = this.scene.get('GameScene');
         if (!gs || !gs.events) return;
         gs.events.off('player-hurt');
         gs.events.off('score-changed');
@@ -65,6 +70,9 @@ class HUDScene extends Phaser.Scene {
         gs.events.on('boss-phase2',   ()       => this._bossPhase2());
         gs.events.on('boss-killed',   ()       => this._hideBossBar());
         gs.events.on('enemy-killed',  pts      => this._addScore(pts));
+
+        // When GameScene shuts down, start polling again for the next one
+        gs.events.once('shutdown', () => this._tryAttach());
     }
 
     _updateHearts(hp) {
