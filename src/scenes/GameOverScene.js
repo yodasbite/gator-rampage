@@ -56,9 +56,18 @@ class GameOverScene extends Phaser.Scene {
 
         this.tweens.add({ targets: retry, alpha: 0, yoyo: true, repeat: -1, duration: 500 });
 
-        // Input
-        this.input.keyboard.once('keydown-SPACE', () => this._restart());
-        this.input.once('pointerdown', () => this._restart());
+        // Wait 1s before accepting input so held SPACE from combat doesn't skip screen
+        this.canRestart = false;
+        this.time.delayedCall(1000, () => { this.canRestart = true; });
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.input.once('pointerdown', () => { if (this.canRestart) this._restart(); });
+    }
+
+    update() {
+        if (this.canRestart && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            this.canRestart = false;
+            this._restart();
+        }
     }
 
     _restart() {

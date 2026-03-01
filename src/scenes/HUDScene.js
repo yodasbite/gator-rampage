@@ -39,13 +39,12 @@ class HUDScene extends Phaser.Scene {
         this._hideBossBar();
 
         // ── Listen to game events ─────────────
-        // Use a slight delay so GameScene is fully active
-        this.time.delayedCall(50, () => this._reattach());
-
-        // Re-attach when game scene restarts
-        this.scene.get('GameScene')?.events.on('shutdown', () => {
-            this.time.delayedCall(100, () => this._reattach());
-        });
+        // Reattach whenever GameScene starts (covers first launch and every level restart)
+        this.scene.manager.events.on('start', (sys) => {
+            if (sys.settings && sys.settings.key === 'GameScene') {
+                this._reattach();
+            }
+        }, this);
     }
 
     _reattach() {
@@ -66,9 +65,6 @@ class HUDScene extends Phaser.Scene {
         gs.events.on('boss-phase2',   ()       => this._bossPhase2());
         gs.events.on('boss-killed',   ()       => this._hideBossBar());
         gs.events.on('enemy-killed',  pts      => this._addScore(pts));
-
-        // Re-wire on next restart
-        gs.events.once('shutdown', () => this.time.delayedCall(100, () => this._reattach()));
     }
 
     _updateHearts(hp) {

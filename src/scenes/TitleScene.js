@@ -91,6 +91,8 @@ class TitleScene extends Phaser.Scene {
     _startGame() {
         this.cameras.main.fade(400, 0, 0, 0);
         this.time.delayedCall(400, () => {
+            // Always stop HUDScene first so it gets a fresh create() each time
+            this.scene.stop('HUDScene');
             this.scene.start('GameScene', { levelIndex: 0 });
             this.scene.launch('HUDScene');
         });
