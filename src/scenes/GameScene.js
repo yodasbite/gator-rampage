@@ -33,9 +33,9 @@ class GameScene extends Phaser.Scene {
         this.events.on('enemy-killed', pts => {
             this.player.addScore(pts);
         });
-        this.events.on('boss-killed',  pts => {
+        this.events.on('boss-killed',  (pts, bx, by) => {
             this.player.addScore(pts);
-            this._onBossKilled();
+            this._spawnFlag(bx, by);
         });
 
         this._showLevelIntro();
@@ -129,6 +129,7 @@ class GameScene extends Phaser.Scene {
 
     // ── Camera ────────────────────────────────
     _setupCamera() {
+        this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
         this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         this.cameras.main.fadeIn(500);
@@ -281,14 +282,38 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    // ── Flag drop (boss killed) ───────────────
+    _spawnFlag(x, y) {
+        const flag = this.physics.add.image(x, y, 'flag');
+        flag.setDepth(C.Z_FX);
+        flag.body.setAllowGravity(false);
+        flag.body.setImmovable(true);
+        flag.setScale(1.5);
+
+        // Pulse glow
+        this.tweens.add({
+            targets: flag, scaleX: 1.8, scaleY: 1.8, alpha: 0.8,
+            yoyo: true, repeat: -1, duration: 350, ease: 'Sine.easeInOut',
+        });
+
+        // "GRAB THE FLAG!" prompt (world-space, scrolls with camera)
+        this._flagPrompt = this.add.text(x, y - 20, 'GRAB THE FLAG!', {
+            fontFamily: 'monospace', fontSize: '5px', color: '#ffff00',
+        }).setOrigin(0.5).setDepth(C.Z_FX);
+        this.tweens.add({ targets: this._flagPrompt, alpha: 0, yoyo: true, repeat: -1, duration: 450 });
+
+        this.physics.add.overlap(this.player, flag, () => {
+            if (this.levelComplete) return;
+            flag.destroy();
+            if (this._flagPrompt) { this._flagPrompt.destroy(); this._flagPrompt = null; }
+            this._onBossKilled(x, y);
+        });
+    }
+
     // ── Boss killed ───────────────────────────
-    _onBossKilled() {
+    _onBossKilled(bx, by) {
         this.levelComplete = true;
-        this._scorePopup(
-            this.boss ? this.boss.x : C.GAME_W/2,
-            this.boss ? this.boss.y : C.GAME_H/2,
-            2000
-        );
+        this._scorePopup(bx || C.GAME_W/2, by || C.GAME_H/2, 2000);
 
         const ld = this.levelData;
         this.time.delayedCall(700, () => {

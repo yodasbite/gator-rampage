@@ -862,6 +862,24 @@ const SPRITES = {
         g.fillStyle(c);        g.fillRect(ox+1, oy+1, 6, 6);
         g.fillStyle(cl);       g.fillRect(ox+2, oy+2, 2, 2);
     },
+
+    // ── Victory flag (16×16) — UF orange/blue pennant on pole ──
+    flag: function(g, ox, oy) {
+        // Pole
+        g.fillStyle(0x888888); g.fillRect(ox + 4, oy + 0, 1, 15);
+        g.fillStyle(0x444444); g.fillRect(ox + 3, oy + 13, 3, 2);  // base
+        // UF orange top stripe
+        g.fillStyle(0xf77f00); g.fillRect(ox + 5, oy + 1, 9, 3);
+        // UF blue bottom stripe
+        g.fillStyle(0x0021a5); g.fillRect(ox + 5, oy + 4, 9, 3);
+        // Highlight on top edge
+        g.fillStyle(0xffaa44); g.fillRect(ox + 5, oy + 1, 9, 1);
+        // Outline
+        g.fillStyle(0x000000);
+        g.fillRect(ox + 5, oy + 1, 9, 1);   // top
+        g.fillRect(ox + 5, oy + 6, 9, 1);   // bottom
+        g.fillRect(ox + 13, oy + 1, 1, 6);  // right edge
+    },
 };
 
 // ── Color utilities ───────────────────────────

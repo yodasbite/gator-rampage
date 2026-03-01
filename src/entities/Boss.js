@@ -195,6 +195,7 @@ class Boss extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
         this.scene.cameras.main.shake(600, 0.025);
 
+        const bx = this.x, by = this.y;
         this.scene.tweens.add({
             targets:  this,
             alpha:    0,
@@ -202,7 +203,7 @@ class Boss extends Phaser.Physics.Arcade.Sprite {
             scaleY:   2,
             duration: 800,
             onComplete: () => {
-                this.scene.events.emit('boss-killed', this.pointValue);
+                this.scene.events.emit('boss-killed', this.pointValue, bx, by);
                 this.destroy();
             }
         });

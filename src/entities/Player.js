@@ -11,6 +11,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setDepth(C.Z_ENTITY);
         this.body.setSize(12, 12);
         this.body.setOffset(2, 2);
+        this.setCollideWorldBounds(true);
 
         // State
         this.health      = C.P_HEALTH;
