@@ -14,7 +14,7 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.levelData   = LEVEL_DATA[this.levelIndex];
+        this.levelData     = LEVEL_DATA[this.levelIndex];
         this.levelComplete = false;
         this.bossActivated = false;
 
@@ -24,19 +24,18 @@ class GameScene extends Phaser.Scene {
         this._spawnBoss();
         this._setupCamera();
         this._setupCollisions();
-
-        this.events.emit('level-start', { name: this.levelData.name });
-        this.events.emit('score-changed', this.playerScore);
-        this.events.emit('player-hurt', this.playerHP);
+        this._createHUD();
 
         this.events.on('player-dead',  () => this._onPlayerDead());
-        this.events.on('enemy-killed', pts => {
+        this.events.on('enemy-killed', pts => this.player.addScore(pts));
+        this.events.on('boss-killed',  (pts) => {
             this.player.addScore(pts);
+            this._onBossKilled();
         });
-        this.events.on('boss-killed',  (pts, bx, by) => {
-            this.player.addScore(pts);
-            this._spawnFlag(bx, by);
-        });
+        this.events.on('player-hurt',   hp       => this._hudUpdateHearts(hp));
+        this.events.on('score-changed', s        => this._hudUpdateScore(s));
+        this.events.on('boss-hurt',     (hp,max) => this._hudUpdateBossBar(hp, max));
+        this.events.on('boss-phase2',   ()       => this._hudBossPhase2());
 
         this._showLevelIntro();
     }
@@ -52,10 +51,7 @@ class GameScene extends Phaser.Scene {
         this.mapWidth  = COLS * T;
         this.mapHeight = ROWS * T;
 
-        // Physics group for solid tiles
         this.walls = this.physics.add.staticGroup();
-
-        // Solid tile indices
         const SOLID = new Set([1, 4, 5, 6, 7]);
 
         for (let row = 0; row < ROWS; row++) {
@@ -67,13 +63,8 @@ class GameScene extends Phaser.Scene {
                 const key = `tile_${tileIdx}`;
                 const img = this.add.image(wx, wy, key).setDepth(C.Z_FLOOR);
 
-                // Apply team color tinting to gate tiles
-                if (tileIdx === 7 && ld.gateColor) {
-                    img.setTint(ld.gateColor);
-                }
-                if (tileIdx === 6 && ld.buildingColor) {
-                    img.setTint(ld.buildingColor);
-                }
+                if (tileIdx === 7 && ld.gateColor)     img.setTint(ld.gateColor);
+                if (tileIdx === 6 && ld.buildingColor) img.setTint(ld.buildingColor);
 
                 if (SOLID.has(tileIdx)) {
                     this.physics.add.existing(img, true);
@@ -104,7 +95,6 @@ class GameScene extends Phaser.Scene {
             const cfg = e.type === 'fan'
                 ? { sprite, health:C.E_HEALTH,   speed:C.E_SPEED,    damage:1, points:100 }
                 : { sprite, health:C.E_HEALTH+1, speed:C.E_SPEED+12, damage:1, points:200 };
-
             const enemy = new Enemy(this, e.x * T + T/2, e.y * T + T/2, cfg);
             this.enemies.add(enemy);
         });
@@ -142,7 +132,6 @@ class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.boss,    this.walls);
         this.physics.add.collider(this.enemies, this.enemies);
 
-        // Player attack → enemies
         this.physics.add.overlap(
             this.player.attackBox, this.enemies,
             (box, enemy) => {
@@ -152,7 +141,6 @@ class GameScene extends Phaser.Scene {
             }
         );
 
-        // Player attack → boss
         this.physics.add.overlap(
             this.player.attackBox, this.boss,
             (box, boss) => {
@@ -161,7 +149,6 @@ class GameScene extends Phaser.Scene {
             }
         );
 
-        // Projectiles → player
         this.physics.add.overlap(
             this.player, this.projectiles,
             (player, proj) => {
@@ -170,7 +157,6 @@ class GameScene extends Phaser.Scene {
             }
         );
 
-        // Projectiles → walls
         this.physics.add.collider(this.projectiles, this.walls, (proj) => proj.destroy());
     }
 
@@ -188,7 +174,6 @@ class GameScene extends Phaser.Scene {
             this.boss.update(time, delta, this.player);
         }
 
-        // Activate boss when player enters the plaza (row < 9)
         if (!this.bossActivated && this.boss && this.boss.active && !this.player.isDead) {
             const plazaY = 9 * C.TILE;
             if (this.player.y < plazaY) {
@@ -196,6 +181,76 @@ class GameScene extends Phaser.Scene {
                 this._showBossIntro();
             }
         }
+    }
+
+    // ── HUD (screen-fixed, scroll factor 0) ───
+    _createHUD() {
+        const w = C.GAME_W, h = C.GAME_H;
+        const d = C.Z_HUD;
+
+        // Top bar background
+        this.add.graphics()
+            .fillStyle(0x000000, 0.7).fillRect(0, 0, w, 18)
+            .setScrollFactor(0).setDepth(d);
+
+        // Hearts
+        this._hudHearts = [];
+        for (let i = 0; i < C.P_HEALTH; i++) {
+            const hrt = this.add.image(8 + i * 12, 9, 'heart_full')
+                .setOrigin(0.5).setScrollFactor(0).setDepth(d);
+            this._hudHearts.push(hrt);
+        }
+        this._hudUpdateHearts(this.playerHP);
+
+        // Score
+        this._hudScoreTxt = this.add.text(w - 4, 4, '', {
+            fontFamily:'monospace', fontSize:'6px', color:'#ffffff',
+        }).setOrigin(1, 0).setScrollFactor(0).setDepth(d);
+        this._hudUpdateScore(this.playerScore);
+
+        // Level name
+        this.add.text(w/2, 4, this.levelData.name, {
+            fontFamily:'monospace', fontSize:'6px', color:'#f77f00',
+        }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(d);
+
+        // Boss bar (hidden until boss fight)
+        this._hudBossBarBg = this.add.graphics().setScrollFactor(0).setDepth(d);
+        this._hudBossBarFg = this.add.graphics().setScrollFactor(0).setDepth(d);
+        this._hudBossTxt   = this.add.text(w/2, h - 18, '', {
+            fontFamily:'monospace', fontSize:'6px', color:'#ff4444',
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(d);
+    }
+
+    _hudUpdateHearts(hp) {
+        this._hudHearts.forEach((h, i) => {
+            h.setTexture(i < hp ? 'heart_full' : 'heart_empty');
+        });
+    }
+
+    _hudUpdateScore(s) {
+        this._hudScoreTxt.setText('SCORE  ' + String(s).padStart(6, '0'));
+    }
+
+    _hudUpdateBossBar(hp, max) {
+        const bw = Math.max(0, Math.floor((hp / max) * (C.GAME_W - 40)));
+        const y  = C.GAME_H - 14;
+        this._hudBossBarBg.clear().fillStyle(0x000000, 0.8).fillRect(20, y, C.GAME_W - 40, 6);
+        this._hudBossBarFg.clear().fillStyle(0xdd2222).fillRect(20, y, bw, 6);
+    }
+
+    _hudHideBossBar() {
+        this._hudBossBarBg.clear();
+        this._hudBossBarFg.clear();
+        this._hudBossTxt.setText('');
+    }
+
+    _hudShowBossName(name) {
+        this._hudBossTxt.setText(name).setColor('#ff4444').setAlpha(1);
+    }
+
+    _hudBossPhase2() {
+        this._hudBossTxt.setColor('#ff8800');
+        this.tweens.add({ targets: this._hudBossTxt, alpha: 0, yoyo: true, repeat: 3, duration: 200 });
     }
 
     // ── Intro / UI ────────────────────────────
@@ -207,8 +262,7 @@ class GameScene extends Phaser.Scene {
             .fillStyle(0x000000, 0.75).fillRect(0, 0, W, H)
             .setScrollFactor(0).setDepth(50);
 
-        const t1 = this.add.text(W/2, H/2 - 24,
-            `LEVEL ${this.levelIndex + 1}`, {
+        const t1 = this.add.text(W/2, H/2 - 24, `LEVEL ${this.levelIndex + 1}`, {
             fontFamily:'monospace', fontSize:'18px', color:'#f77f00',
             stroke:'#000000', strokeThickness:2,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
@@ -228,8 +282,7 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(2800, () => {
             [ov,t1,t2,t3,t4].forEach(o => {
-                this.tweens.add({ targets:o, alpha:0, duration:400,
-                    onComplete:()=>o.destroy() });
+                this.tweens.add({ targets:o, alpha:0, duration:400, onComplete:()=>o.destroy() });
             });
         });
     }
@@ -244,10 +297,7 @@ class GameScene extends Phaser.Scene {
 
         const img = this.add.image(W/2, H/2 - 24, ld.bossSprite)
             .setScrollFactor(0).setDepth(51).setScale(1.4);
-
-        this.tweens.add({
-            targets:img, scaleX:1.6, scaleY:1.6, yoyo:true, repeat:-1, duration:400,
-        });
+        this.tweens.add({ targets:img, scaleX:1.6, scaleY:1.6, yoyo:true, repeat:-1, duration:400 });
 
         const name = this.add.text(W/2, H/2 + 16, ld.bossName, {
             fontFamily:'monospace', fontSize:'10px', color:'#ff4444',
@@ -258,14 +308,11 @@ class GameScene extends Phaser.Scene {
             fontFamily:'monospace', fontSize:'6px', color:'#ffcc88', align:'center',
         }).setOrigin(0.5).setScrollFactor(0).setDepth(51);
 
-        // Show HUD boss name
-        const hud = this.scene.get('HUDScene');
-        if (hud) hud.showBossName(ld.bossName);
+        this._hudShowBossName(ld.bossName);
 
         this.time.delayedCall(2800, () => {
             [ov,img,name,quote].forEach(o => {
-                this.tweens.add({ targets:o, alpha:0, duration:500,
-                    onComplete:()=>o.destroy() });
+                this.tweens.add({ targets:o, alpha:0, duration:500, onComplete:()=>o.destroy() });
             });
             this.boss.activate(this.projectiles);
         });
@@ -282,46 +329,15 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // ── Flag drop (boss killed) ───────────────
-    _spawnFlag(x, y) {
-        const flag = this.physics.add.image(x, y, 'flag');
-        flag.setDepth(C.Z_FX);
-        flag.body.setAllowGravity(false);
-        flag.body.setImmovable(true);
-        flag.setScale(1.5);
-
-        // Pulse glow
-        this.tweens.add({
-            targets: flag, scaleX: 1.8, scaleY: 1.8, alpha: 0.8,
-            yoyo: true, repeat: -1, duration: 350, ease: 'Sine.easeInOut',
-        });
-
-        // "GRAB THE FLAG!" prompt (world-space, scrolls with camera)
-        this._flagPrompt = this.add.text(x, y - 20, 'GRAB THE FLAG!', {
-            fontFamily: 'monospace', fontSize: '5px', color: '#ffff00',
-        }).setOrigin(0.5).setDepth(C.Z_FX);
-        this.tweens.add({ targets: this._flagPrompt, alpha: 0, yoyo: true, repeat: -1, duration: 450 });
-
-        // Delay overlap so player doesn't grab it instantly while standing on the boss
-        this.time.delayedCall(900, () => {
-            if (!flag.active) return;
-            this.physics.add.overlap(this.player, flag, () => {
-                if (this.levelComplete) return;
-                flag.destroy();
-                if (this._flagPrompt) { this._flagPrompt.destroy(); this._flagPrompt = null; }
-                this._onBossKilled(x, y);
-            });
-        });
-    }
-
     // ── Boss killed ───────────────────────────
-    _onBossKilled(bx, by) {
+    _onBossKilled() {
         this.levelComplete = true;
-        this._scorePopup(bx || C.GAME_W/2, by || C.GAME_H/2, 2000);
+        this._hudHideBossBar();
 
+        const [W, H] = [C.GAME_W, C.GAME_H];
         const ld = this.levelData;
-        this.time.delayedCall(700, () => {
-            const [W, H] = [C.GAME_W, C.GAME_H];
+
+        this.time.delayedCall(800, () => {
             const ov = this.add.graphics()
                 .fillStyle(0x000000, 0.78).fillRect(0, 0, W, H)
                 .setScrollFactor(0).setDepth(50);
@@ -349,7 +365,6 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.fade(500, 0, 0, 0);
         this.time.delayedCall(500, () => {
             if (next >= LEVEL_DATA.length) {
-                this.scene.stop('HUDScene');
                 this.scene.start('VictoryScene', { score: this.player.score });
             } else {
                 this.scene.restart({
@@ -364,7 +379,6 @@ class GameScene extends Phaser.Scene {
     _onPlayerDead() {
         this.cameras.main.fade(700, 0, 0, 0);
         this.time.delayedCall(700, () => {
-            this.scene.stop('HUDScene');
             this.scene.start('GameOverScene', {
                 score: this.player.score,
                 level: this.levelIndex + 1,

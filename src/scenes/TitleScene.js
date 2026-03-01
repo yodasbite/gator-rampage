@@ -91,13 +91,7 @@ class TitleScene extends Phaser.Scene {
     _startGame() {
         this.cameras.main.fade(400, 0, 0, 0);
         this.time.delayedCall(400, () => {
-            // Stop HUDScene only if it is actually running (safe guard)
-            if (this.scene.isActive('HUDScene') || this.scene.isPaused('HUDScene')) {
-                this.scene.stop('HUDScene');
-            }
             this.scene.start('GameScene', { levelIndex: 0 });
-            this.scene.launch('HUDScene');
-            this.scene.bringToTop('HUDScene');
         });
     }
 }
