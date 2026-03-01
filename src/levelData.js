@@ -113,12 +113,14 @@ const LEVEL_DATA = [
         buildingColor:0x8a4a2a,
         seatColor:    0x8a1a1a,
 
-        // Player starts at the bottom (row 39)
         playerStart: { x: 15, y: 38 },
-        // Boss waits in the plaza (rows 5-8)
         bossPos:     { x: 15, y: 6 },
 
-        // Enemies scattered along the street (rows 10-35)
+        powerups: [
+            { x: 13, y: 26, type: 'atk' },   // orange orb mid-street
+            { x: 17, y: 16, type: 'hp'  },   // blue orb upper street
+        ],
+
         enemies: [
             { x:14, y:34, type:'fan' },
             { x:17, y:32, type:'fan' },
@@ -162,6 +164,11 @@ const LEVEL_DATA = [
 
         playerStart: { x:15, y:38 },
         bossPos:     { x:15, y:6 },
+
+        powerups: [
+            { x: 16, y: 24, type: 'atk' },
+            { x: 12, y: 14, type: 'hp'  },
+        ],
 
         enemies: [
             { x:13, y:35, type:'fan' },
@@ -211,6 +218,11 @@ const LEVEL_DATA = [
         playerStart: { x:15, y:38 },
         bossPos:     { x:15, y:6 },
 
+        powerups: [
+            { x: 14, y: 27, type: 'atk' },
+            { x: 18, y: 16, type: 'hp'  },
+        ],
+
         enemies: [
             { x:15, y:35, type:'fan' },
             { x:11, y:33, type:'minion' },
@@ -258,6 +270,12 @@ const LEVEL_DATA = [
         playerStart: { x:15, y:38 },
         bossPos:     { x:15, y:6 },
 
+        powerups: [
+            { x: 11, y: 28, type: 'atk' },
+            { x: 19, y: 20, type: 'hp'  },
+            { x: 15, y: 12, type: 'atk' },   // second atk orb on later level
+        ],
+
         enemies: [
             { x:12, y:36, type:'fan' },
             { x:18, y:34, type:'fan' },
@@ -304,6 +322,12 @@ const LEVEL_DATA = [
 
         playerStart: { x:15, y:38 },
         bossPos:     { x:15, y:6 },
+
+        powerups: [
+            { x: 13, y: 30, type: 'atk' },
+            { x: 17, y: 22, type: 'hp'  },
+            { x: 15, y: 13, type: 'atk' },   // second atk orb on final level
+        ],
 
         enemies: [
             { x:14, y:36, type:'minion' },  // harder level — starts with minion

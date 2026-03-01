@@ -109,6 +109,8 @@ class PreloadScene extends Phaser.Scene {
         this._make('hit_fx',    8, 8, g => SPRITES.hit_fx(g, 0, 0));
         this._make('attack_fx',16, 8, g => SPRITES.attack_fx(g, 0, 0));
         this._make('projectile', 8, 8, g => SPRITES.projectile(g, 0, 0, 0xff4400));
-        this._make('flag', 16, 16, g => SPRITES.flag(g, 0, 0));
+        this._make('flag',        16, 16, g => SPRITES.flag(g, 0, 0));
+        this._make('powerup_atk', 12, 12, g => SPRITES.powerup_atk(g, 0, 0));
+        this._make('powerup_hp',  12, 12, g => SPRITES.powerup_hp(g, 0, 0));
     }
 }

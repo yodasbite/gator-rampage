@@ -863,6 +863,45 @@ const SPRITES = {
         g.fillStyle(cl);       g.fillRect(ox+2, oy+2, 2, 2);
     },
 
+    // ── Power-up orbs (12×12) ────────────────────────────────
+    // Attack boost — orange orb with sword cross
+    powerup_atk: function(g, ox, oy) {
+        g.fillStyle(0x331100);  // outline
+        g.fillRect(ox+3, oy,   6, 1); g.fillRect(ox+3, oy+11, 6, 1);
+        g.fillRect(ox,   oy+3, 1, 6); g.fillRect(ox+11, oy+3, 1, 6);
+        g.fillRect(ox+1, oy+1, 2, 2); g.fillRect(ox+9, oy+1, 2, 2);
+        g.fillRect(ox+1, oy+9, 2, 2); g.fillRect(ox+9, oy+9, 2, 2);
+        g.fillStyle(0xb85c00);  // dark orange body
+        g.fillRect(ox+2, oy+1, 8, 10); g.fillRect(ox+1, oy+2, 10, 8);
+        g.fillStyle(ox, oy, 0xf77f00);  // mid orange
+        g.fillStyle(0xf77f00);
+        g.fillRect(ox+3, oy+2, 6, 8);  g.fillRect(ox+2, oy+3, 8, 6);
+        g.fillStyle(0xffcc44);  // highlight
+        g.fillRect(ox+3, oy+3, 3, 2);
+        g.fillStyle(0xffffff);  // sword cross symbol
+        g.fillRect(ox+5, oy+3, 2, 6);  // vertical
+        g.fillRect(ox+3, oy+5, 6, 2);  // horizontal
+    },
+
+    // Health restore — blue orb with heart
+    powerup_hp: function(g, ox, oy) {
+        g.fillStyle(0x000a33);  // outline
+        g.fillRect(ox+3, oy,   6, 1); g.fillRect(ox+3, oy+11, 6, 1);
+        g.fillRect(ox,   oy+3, 1, 6); g.fillRect(ox+11, oy+3, 1, 6);
+        g.fillRect(ox+1, oy+1, 2, 2); g.fillRect(ox+9, oy+1, 2, 2);
+        g.fillRect(ox+1, oy+9, 2, 2); g.fillRect(ox+9, oy+9, 2, 2);
+        g.fillStyle(0x001480);  // dark blue body
+        g.fillRect(ox+2, oy+1, 8, 10); g.fillRect(ox+1, oy+2, 10, 8);
+        g.fillStyle(0x0033cc);  // mid blue
+        g.fillRect(ox+3, oy+2, 6, 8);  g.fillRect(ox+2, oy+3, 8, 6);
+        g.fillStyle(0x44aaff);  // highlight
+        g.fillRect(ox+3, oy+3, 3, 2);
+        g.fillStyle(0xffffff);  // heart symbol
+        g.fillRect(ox+3, oy+4, 2, 3); g.fillRect(ox+7, oy+4, 2, 3);
+        g.fillRect(ox+3, oy+6, 6, 2);
+        g.fillRect(ox+4, oy+7, 4, 1); g.fillRect(ox+5, oy+8, 2, 1);
+    },
+
     // ── Victory flag (16×16) — UF orange/blue pennant on pole ──
     flag: function(g, ox, oy) {
         // Pole

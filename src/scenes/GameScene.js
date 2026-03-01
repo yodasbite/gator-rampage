@@ -8,10 +8,11 @@ class GameScene extends Phaser.Scene {
     constructor() { super('GameScene'); }
 
     init(data) {
-        this.levelIndex  = data.levelIndex || 0;
-        this.playerScore = data.score      || 0;
-        this.playerHP    = data.hp         != null ? data.hp : C.P_HEALTH;
-        this.playerLives = data.lives      != null ? data.lives : C.P_LIVES;
+        this.levelIndex    = data.levelIndex  || 0;
+        this.playerScore   = data.score       || 0;
+        this.playerHP      = data.hp          != null ? data.hp     : C.P_HEALTH;
+        this.playerLives   = data.lives       != null ? data.lives   : C.P_LIVES;
+        this.attackDamage  = data.damage      != null ? data.damage  : C.P_ATTACK_DMG;
     }
 
     create() {
@@ -23,6 +24,7 @@ class GameScene extends Phaser.Scene {
         this._spawnPlayer();
         this._spawnEnemies();
         this._spawnBoss();
+        this._spawnPowerups();
         this._setupCamera();
         this._setupCollisions();
         this._createHUD();
@@ -119,6 +121,61 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    // ── Power-ups ─────────────────────────────
+    _spawnPowerups() {
+        const T = C.TILE;
+        this._powerupGroup = this.physics.add.group();
+
+        (this.levelData.powerups || []).forEach(p => {
+            const key = p.type === 'atk' ? 'powerup_atk' : 'powerup_hp';
+            const x   = p.x * T + T / 2;
+            const y   = p.y * T + T / 2;
+            const orb = this.physics.add.image(x, y, key);
+            orb.puType = p.type;
+            orb.setDepth(C.Z_ENTITY - 1);
+            orb.body.setAllowGravity(false);
+            orb.body.setImmovable(true);
+            this._powerupGroup.add(orb);
+
+            // Pulse animation (scale only — keeps physics body in place)
+            this.tweens.add({
+                targets: orb, scaleX: 1.3, scaleY: 1.3,
+                yoyo: true, repeat: -1, duration: 500, ease: 'Sine.easeInOut',
+            });
+        });
+
+        this.physics.add.overlap(this.player, this._powerupGroup, (_, orb) => {
+            this._collectPowerup(orb);
+        });
+    }
+
+    _collectPowerup(orb) {
+        if (!orb.active) return;
+        orb.destroy();
+
+        if (orb.puType === 'atk') {
+            this.attackDamage = Math.min(this.attackDamage + 1, C.P_ATTACK_MAX);
+            this._floatText(orb.x, orb.y, '+ATK!', '#ff8800');
+            this.cameras.main.shake(80, 0.006);
+        } else {
+            const gained = Math.min(2, C.P_HEALTH - this.player.health);
+            this.player.health = Math.min(this.player.health + 2, C.P_HEALTH);
+            this.events.emit('player-hurt', this.player.health);
+            this._floatText(orb.x, orb.y, '+LIFE!', '#44aaff');
+        }
+    }
+
+    _floatText(x, y, msg, color) {
+        const txt = this.add.text(x, y - 8, msg, {
+            fontFamily: 'monospace', fontSize: '7px', color,
+            stroke: '#000000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(C.Z_FX);
+        this.tweens.add({
+            targets: txt, y: y - 28, alpha: 0, duration: 900,
+            onComplete: () => txt.destroy(),
+        });
+    }
+
     // ── Camera ────────────────────────────────
     _setupCamera() {
         this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
@@ -138,7 +195,7 @@ class GameScene extends Phaser.Scene {
             this.player.attackBox, this.enemies,
             (box, enemy) => {
                 if (!this.player.isAttacking || !enemy.active) return;
-                const killed = enemy.takeDamage(C.P_ATTACK_DMG, this.player.x, this.player.y);
+                const killed = enemy.takeDamage(this.attackDamage, this.player.x, this.player.y);
                 if (killed) this._scorePopup(enemy.x, enemy.y, enemy.pointValue);
             }
         );
@@ -147,7 +204,7 @@ class GameScene extends Phaser.Scene {
             this.player.attackBox, this.boss,
             (box, boss) => {
                 if (!this.player.isAttacking || !boss.active || !boss.activated) return;
-                boss.takeDamage(C.P_ATTACK_DMG, this.player.x, this.player.y);
+                boss.takeDamage(this.attackDamage, this.player.x, this.player.y);
             }
         );
 
@@ -387,6 +444,8 @@ class GameScene extends Phaser.Scene {
                     levelIndex: next,
                     score:      this.player.score,
                     hp:         this.player.health,
+                    lives:      this.playerLives,
+                    damage:     this.attackDamage,
                 });
             }
         });
@@ -405,6 +464,7 @@ class GameScene extends Phaser.Scene {
                     score:      this.player.score,
                     hp:         C.P_HEALTH,
                     lives:      this.playerLives,
+                    damage:     this.attackDamage,
                 });
             } else {
                 this.scene.start('GameOverScene', {
