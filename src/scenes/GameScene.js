@@ -302,11 +302,15 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(C.Z_FX);
         this.tweens.add({ targets: this._flagPrompt, alpha: 0, yoyo: true, repeat: -1, duration: 450 });
 
-        this.physics.add.overlap(this.player, flag, () => {
-            if (this.levelComplete) return;
-            flag.destroy();
-            if (this._flagPrompt) { this._flagPrompt.destroy(); this._flagPrompt = null; }
-            this._onBossKilled(x, y);
+        // Delay overlap so player doesn't grab it instantly while standing on the boss
+        this.time.delayedCall(900, () => {
+            if (!flag.active) return;
+            this.physics.add.overlap(this.player, flag, () => {
+                if (this.levelComplete) return;
+                flag.destroy();
+                if (this._flagPrompt) { this._flagPrompt.destroy(); this._flagPrompt = null; }
+                this._onBossKilled(x, y);
+            });
         });
     }
 
