@@ -14,24 +14,38 @@
             min-height: 100vh;
             overflow: hidden;
         }
-        canvas { display: block; image-rendering: pixelated; }
+        #renderCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
     </style>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- Babylon.js 6.x -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <!-- Game data (unchanged) -->
     <script src="src/constants.js"></script>
-    <script src="src/MusicEngine.js"></script>
-    <script src="src/spriteData.js"></script>
     <script src="src/levelData.js"></script>
-    <script src="src/entities/Player.js"></script>
-    <script src="src/entities/Enemy.js"></script>
-    <script src="src/entities/Boss.js"></script>
-    <script src="src/scenes/PreloadScene.js"></script>
-    <script src="src/scenes/TitleScene.js"></script>
-    <script src="src/scenes/HUDScene.js"></script>
-    <script src="src/scenes/GameScene.js"></script>
-    <script src="src/scenes/GameOverScene.js"></script>
-    <script src="src/scenes/VictoryScene.js"></script>
-    <script src="src/main.js"></script>
+
+    <!-- Babylon game scripts (load order matters) -->
+    <script src="src/babylon/Input.js"></script>
+    <script src="src/babylon/Collision.js"></script>
+    <script src="src/babylon/World.js"></script>
+    <script src="src/babylon/HUD.js"></script>
+    <script src="src/babylon/CameraFollower.js"></script>
+    <script src="src/babylon/entities/Player3D.js"></script>
+    <script src="src/babylon/entities/Enemy3D.js"></script>
+    <script src="src/babylon/entities/Boss3D.js"></script>
+    <script src="src/babylon/screens/TitleScreen.js"></script>
+    <script src="src/babylon/screens/GameOverScreen.js"></script>
+    <script src="src/babylon/screens/VictoryScreen.js"></script>
+    <script src="src/babylon/GameManager.js"></script>
+    <script src="src/babylon/engine.js"></script>
 </body>
 </html>
